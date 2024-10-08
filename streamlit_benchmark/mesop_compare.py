@@ -83,7 +83,11 @@ def show_one(benchmarks, key, content_width):
     plot.set_title('Kernel Density Estimation')
     me.plot(fig)
 
-    me.table(agg_df.to_pandas())
+    with me.box(style=me.Style(
+            width=content_width,
+            overflow='scroll',
+    )):
+        me.table(agg_df.to_pandas())
 
 
 @me.stateclass
