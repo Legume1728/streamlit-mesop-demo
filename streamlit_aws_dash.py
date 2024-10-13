@@ -11,7 +11,7 @@ ec2 = boto3.client('ec2')
 autoscaling = boto3.client('autoscaling')
 elbv2 = boto3.client('elbv2')
 local_tz = pytz.timezone('America/Los_Angeles')
-VPC_ID = os.environ['VPC_ID']
+VPC_ID = os.environ.get('VPC_ID')
 
 layout = [{
     'key': 'instances',
@@ -37,6 +37,9 @@ layout = [{
 }, {
     'key': 'listeners',
     'display': 'LB Listeners',
+}, {
+    'key': 'nat_gateways',
+    'display': 'NAT Gateways',
 }]
 
 
@@ -52,17 +55,23 @@ def main():
         for section in layout:
             if not st.session_state[f"{section['key']}_enabled"]:
                 continue
-            st.write(section['display'], data[section['key']])
+            st.html(f"<a name='{section['key']}'></a>{section['display']}")
+            st.write(data[section['key']])
 
     with columns[1]:
         st.button('Refresh', on_click=reload_data)
 
         for section in layout:
             # the "key" arg publishes the checkbox state to the session state, and vice versa
-            st.checkbox(
-                section['display'],
-                key=f"{section['key']}_enabled",
-            )
+            checkbox_columns = st.columns([2, 1])
+            with checkbox_columns[0]:
+                st.checkbox(
+                    section['display'],
+                    key=f"{section['key']}_enabled",
+                )
+
+            with checkbox_columns[1]:
+                st.markdown(f"[[Go]](#{section['key']})")
 
 
 def toggle_section_enabled(section):
@@ -211,6 +220,19 @@ def load_data():
                 'target_group':
                 listener['DefaultActions'][0]['TargetGroupArn'],
             })
+    nat_gateways = []
+    response = ec2.describe_nat_gateways()
+    for gateway in response['NatGateways']:
+        nat_gateways.append({
+            'id':
+            gateway['NatGatewayId'],
+            'public_ip':
+            gateway['NatGatewayAddresses'][0]['PublicIp'],
+            'private_ip':
+            gateway['NatGatewayAddresses'][0]['PrivateIp'],
+            'status':
+            gateway['State'],
+        })
 
     data = {}
     data['instances'] = pl.DataFrame(instances)
@@ -221,6 +243,7 @@ def load_data():
     data['target_groups'] = pl.DataFrame(target_groups)
     data['load_balancers'] = pl.DataFrame(load_balancers)
     data['listeners'] = pl.DataFrame(listeners)
+    data['nat_gateways'] = pl.DataFrame(nat_gateways)
     return data
 
 
