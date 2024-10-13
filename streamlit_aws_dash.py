@@ -131,7 +131,7 @@ def load_data():
     response = ec2.describe_security_groups()
     # st.write(response)
     for security_group in response['SecurityGroups']:
-        if security_group['VpcId'] != VPC_ID:
+        if VPC_ID and security_group['VpcId'] != VPC_ID:
             continue
         security_groups.append({
             'id':
@@ -154,7 +154,7 @@ def load_data():
     subnets = []
     response = ec2.describe_subnets()
     for subnet in response['Subnets']:
-        if subnet['VpcId'] != VPC_ID:
+        if VPC_ID and subnet['VpcId'] != VPC_ID:
             continue
         subnets.append({
             'id':
