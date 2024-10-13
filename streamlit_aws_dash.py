@@ -156,16 +156,16 @@ def load_data():
     for subnet in response['Subnets']:
         if VPC_ID and subnet['VpcId'] != VPC_ID:
             continue
+        names = [
+            tag['Value'] for tag in subnet.get('Tags', [])
+            if tag['Key'] == 'Name'
+        ]
+
         subnets.append({
-            'id':
-            subnet['SubnetId'],
-            'name':
-            [tag['Value'] for tag in subnet['Tags']
-             if tag['Key'] == 'Name'][0],
-            'cidr':
-            subnet['CidrBlock'],
-            'AZ':
-            subnet['AvailabilityZone'],
+            'id': subnet['SubnetId'],
+            'name': names[0] if names else '',
+            'cidr': subnet['CidrBlock'],
+            'AZ': subnet['AvailabilityZone'],
         })
 
     autoscaling_groups = []
